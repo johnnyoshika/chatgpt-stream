@@ -24,3 +24,7 @@ npm start
 ```
 
 http://localhost:8000
+
+## Demo
+
+![Alt text](demo.gif)
