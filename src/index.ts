@@ -21,6 +21,98 @@ const query = 'Why is the sky blue?';
 
 const app = express();
 
+app.get('/', (_req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <style>
+          .chat {
+              min-height: 140px;
+              font-family: Arial, sans-serif;
+              padding: 10px;
+              border: 1px solid #ccc;
+              line-height: 1.4;
+          }
+          
+          .chat div:last-child::after {
+              content: '';
+              display: inline-block;
+              background-color: #a4a4a4;
+              width: 12px;
+              height: 20px;
+              animation: blink 1s infinite;
+              margin-left: 4px;
+              vertical-align: -3px; 
+          }
+          
+          @keyframes blink {
+              0%, 100% { opacity: 0; }
+              50% { opacity: 1; }
+          }
+        </style>
+      </head>
+      <body>
+      <button id="start-both">Stream both</button>
+      <h3>OpenAI: <button data-service="openai" type="button">Stream</button></h3>
+      <p>${query}</p>
+      <div class="chat"><div id="openai"></div></div>
+      <div style="height: 40px;"></div>
+      <h3>Azure: <button data-service="azure" type="button">Stream</button></h3>
+      <p>${query}</p>
+      <div class="chat"><div id="azure"></div></div>
+      <script>
+        const connectToSteam = (service) => {
+          document.getElementById(service).innerHTML = '';
+          const eventSource = new EventSource('/' + service);
+
+          // Messages sent from the server that do not have an event field are received as 'message' events: https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#listening_for_message_events
+          eventSource.addEventListener('message', event => {
+            const data = JSON.parse(event.data);
+
+            if (data.done) {
+              console.log('Done');
+              // Close the connection before server closes it, b/c as soon as server closes connection, our 'error' callback will be called
+              eventSource.close();
+              return;
+            }
+
+            if (data.error) {
+              console.log('Error', data.error);
+              eventSource.close();
+              return;
+            }
+
+            console.log(data);
+            document.getElementById(service).innerHTML += data.text;
+          });
+
+          eventSource.addEventListener('error', error => {
+            // This error callback will be called whenever the server closes the connection.
+            // If the stream is done, the client will have closed the connection already (see code above), so this 'error' callback won't be called.
+            // If this error callback is called, then it means that there's been some sort of unexpected error (e.g. network disconnect) or the server closed the connection for some reason.
+            console.error('EventSource error:', error);
+
+            // We're going to close the connection on error, otherwise the client will try to reconnect with a new EventSource(): https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#closing_event_streams
+            eventSource.close();
+          });
+        }
+
+        document.querySelectorAll('button[data-service]').forEach(button => {
+          button.addEventListener('click', (e) => {
+            connectToSteam(e.target.getAttribute('data-service'));
+          });
+        });
+
+        document.querySelector('#start-both').addEventListener('click', () => {
+          connectToSteam('openai');
+          connectToSteam('azure');
+        });
+      </script>
+      </body>
+    </html>`);
+});
+
 app.get('/openai', async (_req, res) => {
   console.log('/openai');
 
