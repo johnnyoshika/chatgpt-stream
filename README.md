@@ -1,20 +1,21 @@
-# Simple Node Application
+# ChatGPT Stream Sandbox
 
-Includes:
+Sandbox for testing OpenAI and Azure's stream services.
 
-- ES6 Modules
-- Typescript
-- Express
-- Debug support in VS Code
-
-Inspired by: https://medium.com/create-a-server-with-nodemon-express-typescript/create-a-server-with-nodemon-express-typescript-f7c88fb5ee71
+Inspiration:  
+https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events  
+https://stackoverflow.com/a/76143463/188740  
+https://github.com/openai/openai-node/issues/18  
+https://masteringjs.io/tutorials/express/server-sent-events  
+https://betterprogramming.pub/openai-sse-sever-side-events-streaming-api-733b8ec32897
 
 ## Setup
 
-- From the [repo](https://github.com/johnnyoshika/minimal-node-typescript), select `Use this template` -> `Create a new repository`.
-- Clone the new repo that was created.
-- Run `npm ci` to install dependencies.
-- Copy `.env.example` to `.env`.
+```
+npm ci
+```
+
+Copy `.env.example` to `.env` and fill in the values.
 
 ## Start
 
@@ -22,31 +23,4 @@ Inspired by: https://medium.com/create-a-server-with-nodemon-express-typescript/
 npm start
 ```
 
-## Debug in VS Code
-
-<kbd>F5</kbd>
-
-_Note: Re-compile on file change isn't available in debug mode, so stop/start is required to reflect code changes._
-
-## Build
-
-```
-npm run build
-```
-
-Deployable build will be in `dist` folder.
-
-Command to run production app in Linux / macOS:
-
-```
-NODE_PATH=dist/ node ./dist/index.js
-```
-
-Command to run production app in Windows:
-
-```
-$env:NODE_PATH="dist/"
-node ./dist/index.js
-```
-
-Explanation of `NODE_PATH=dist/`: https://stackoverflow.com/a/65867369/188740
+http://localhost:8000
