@@ -111,6 +111,68 @@ app.get('/openai', async (_req, res) => {
   }
 });
 
+app.get('/azure', async (req, res) => {
+  console.log('/azure');
+
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders(); // flush the headers to establish SSE with client
+
+  try {
+    // https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/openai/openai/samples/v1-beta/typescript/src/listCompletions.ts
+    const events = await azureOpenAI.listChatCompletions(
+      'gpt-35-turbo',
+      [
+        {
+          role: 'user',
+          content: query,
+        },
+      ],
+      { maxTokens: 1000 },
+    );
+
+    let body = '';
+
+    for await (const event of events) {
+      for (const choice of event.choices) {
+        const content = choice.delta?.content;
+        console.log(content);
+        if (!content) continue;
+
+        body += content;
+
+        // res.write() flushes the headers along with its first chunk
+        // More info on res.write() and res.flushHeaders() used above: https://stackoverflow.com/a/68900039/188740
+        res.write(
+          `data: ${JSON.stringify({
+            // Do the \n replacement here, b/c if \n is at the end of the chunk, it'll be considered a chunk separator by the browser
+            text: replaceAll(content, '\n', '<br>'),
+          })}\n\n`, // Each notification is sent as a block of text terminated by a pair of newlines: https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#sending_events_from_the_server
+        );
+      }
+    }
+
+    console.log('body', body);
+
+    console.log('Done, closing the connection');
+    res.write(
+      `data: ${JSON.stringify({
+        done: true,
+      })}\n\n`,
+    );
+    res.end();
+  } catch (error) {
+    console.error('on exception', error);
+    res.write(
+      `data: ${JSON.stringify({
+        error: errorMessage(error),
+      })}\n\n`,
+    );
+    res.end();
+  }
+});
+
 const PORT = process.env.PORT || 8000;
 
 app.listen(PORT, () => {
